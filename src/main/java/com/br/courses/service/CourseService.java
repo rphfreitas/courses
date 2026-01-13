@@ -1,11 +1,10 @@
-package com.example.project_exemple.main.service;
+package com.br.courses.service;
 
-import com.example.project_exemple.main.exception.ItemNotFoundException;
-import com.example.project_exemple.main.model.Course;
-import com.example.project_exemple.main.repository.CourseRepository;
+import com.br.courses.exception.ItemNotFoundException;
+import com.br.courses.model.Course;
+import com.br.courses.repository.CourseRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -17,17 +16,17 @@ public class CourseService {
 
     private final CourseRepository repository;
 
-    public List<Course> listar() {
+    public List<Course> findAll() {
         log.info("Listando cursos");
         return repository.findAll();
     }
 
-    public Course salvar(Course course) {
+    public Course save(Course course) {
         log.info("Salvando curso: " + course.toString());
         return repository.save(course);
     }
 
-    public void deletar(Long id) {
+    public void delete(Long id) {
         log.info("Deletando curso com id: " + id);
 
         var record = repository.findById(id)
@@ -36,7 +35,7 @@ public class CourseService {
         repository.deleteById(record.getId());
     }
 
-    public Course atualizar(Long id,Course course) {
+    public Course update(Long id, Course course) {
         log.info("Atualizando curso: " + course.toString());
 
         return repository.findById(id).map(record -> {
@@ -44,5 +43,12 @@ public class CourseService {
             record.setCategory(course.getCategory());
             return repository.save(record);
         }).orElseThrow(() -> new ItemNotFoundException("Curso não encontrado com id: " + course.getId()));
+    }
+
+    public Course find(Long id) {
+        log.info("Listando curso com id: " + id);
+
+        return repository.findById(id)
+                .orElseThrow(() -> new ItemNotFoundException("Curso não encontrado com id: " + id));
     }
 }

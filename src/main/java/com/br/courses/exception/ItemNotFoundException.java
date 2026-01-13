@@ -1,4 +1,4 @@
-package com.example.project_exemple.main.exception;
+package com.br.courses.exception;
 
 public class ItemNotFoundException extends RuntimeException {
     public ItemNotFoundException(String message) {

@@ -1,4 +1,4 @@
-package com.example.project_exemple.main.exception;
+package com.br.courses.exception;
 
 import lombok.AllArgsConstructor;
 import lombok.Data;

@@ -1,7 +1,7 @@
-package com.example.project_exemple.main.controller;
+package com.br.courses.controller;
 
-import com.example.project_exemple.main.model.Course;
-import com.example.project_exemple.main.service.CourseService;
+import com.br.courses.model.Course;
+import com.br.courses.service.CourseService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
@@ -18,26 +18,30 @@ public class CourseController {
     private final CourseService service;
 
     @GetMapping
-    public @ResponseBody List<Course> listar() {
+    public @ResponseBody List<Course> listarTodos() {
+        return service.findAll();
+    }
 
-        return service.listar();
+    @GetMapping("/{id}")
+    public @ResponseBody ResponseEntity<Course> listar(@PathVariable Long id) {
+        return ResponseEntity.ok(service.find(id));
     }
 
     @PostMapping
     public ResponseEntity<Course> salvar(@RequestBody @Valid Course course) {
 
-        return ResponseEntity.status(HttpStatus.CREATED).body(service.salvar(course));
+        return ResponseEntity.status(HttpStatus.CREATED).body(service.save(course));
     }
 
     @PutMapping("/{id}")
     public @ResponseBody ResponseEntity<Course> editar(@PathVariable Long id, @RequestBody Course course) {
-        Course atualizar = service.atualizar(id, course);
+        Course atualizar = service.update(id, course);
         return ResponseEntity.ok(atualizar);
     }
 
     @DeleteMapping("/{id}")
-    public @ResponseBody <Void> ResponseEntity deletar(@PathVariable Long id) {
-        service.deletar(id);
+    public @ResponseBody ResponseEntity<Void> deletar(@PathVariable Long id) {
+        service.delete(id);
         return ResponseEntity.noContent().build();
     }
 

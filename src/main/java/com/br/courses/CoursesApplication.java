@@ -1,4 +1,4 @@
-package com.example.project_exemple;
+package com.br.courses;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.SpringApplication;
@@ -6,10 +6,10 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 
 @Slf4j
 @SpringBootApplication
-public class ProjectExempleApplication {
+public class CoursesApplication {
 
     public static void main(String[] args) {
-        SpringApplication.run(ProjectExempleApplication.class, args);
+        SpringApplication.run(CoursesApplication.class, args);
     }
 
 

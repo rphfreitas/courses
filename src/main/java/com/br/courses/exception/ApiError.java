@@ -1,17 +1,16 @@
-package com.example.project_exemple.main.exception;
+package com.br.courses.exception;
+
 
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import java.util.List;
-
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class ValidationErrorResponse {
+public class ApiError {
     private String timestamp;
     private int status;
     private String error;
-    private List<ValidationError> errors;
+    private String message;
 }
