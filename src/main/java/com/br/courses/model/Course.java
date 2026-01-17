@@ -15,7 +15,7 @@ public class Course {
     @Id
     @GeneratedValue(strategy = GenerationType.AUTO)
     @JsonProperty("_id")
-    @Schema(description = "Identificador único do curso", example = "1")
+    @Schema(hidden = true)
     private Long id;
 
     @NotBlank(message = "O nome é obrigatório")

@@ -1,6 +1,6 @@
 # 🎓 Courses Service API
 
-Uma API REST robusta e bem testada para gerenciamento de cursos, desenvolvida com Spring Boot 4.0.1 e Java 21.
+Uma API REST robusta e bem testada para gerenciamento de cursos com autenticação integrada, desenvolvida com Spring Boot 4.0.1 e Java 21.
 
 ## 📖 Sumário
 
@@ -9,6 +9,9 @@ Uma API REST robusta e bem testada para gerenciamento de cursos, desenvolvida co
 - [Tecnologias](#tecnologias)
 - [Pré-requisitos](#pré-requisitos)
 - [Instalação](#instalação)
+- [Segurança com Spring Security](#segurança-com-spring-security)
+- [Autenticação](#autenticação)
+- [Endpoints da API](#endpoints-da-api)
 - [Configuração](#configuração)
 - [Como Usar](#como-usar)
 - [Endpoints da API](#endpoints-da-api)
