@@ -1,5 +1,6 @@
 package com.br.courses.service;
 
+import com.br.courses.dto.CourseRequest;
 import com.br.courses.exception.ItemNotFoundException;
 import com.br.courses.model.Course;
 import com.br.courses.repository.CourseRepository;
@@ -37,12 +38,12 @@ class CourseServiceTest {
     void setUp() {
         course = new Course();
         course.setId(1L);
-        course.setName("Spring Boot Basics");
+        course.setTitle("Spring Boot Basics");
         course.setCategory("BACK");
 
         course2 = new Course();
         course2.setId(2L);
-        course2.setName("Advanced Spring");
+        course2.setTitle("Advanced Spring");
         course2.setCategory("BACK");
     }
 
@@ -114,7 +115,7 @@ class CourseServiceTest {
         assertThat(result)
                 .isNotNull()
                 .isEqualTo(course)
-                .extracting(Course::getId, Course::getName, Course::getCategory)
+                .extracting(Course::getId, Course::getTitle, Course::getCategory)
                 .containsExactly(1L, "Spring Boot Basics", "BACK");
 
         verify(courseRepository, times(1)).save(course);
@@ -125,12 +126,12 @@ class CourseServiceTest {
     void testSaveNewCourseWithoutId() {
         // Arrange
         Course newCourse = new Course();
-        newCourse.setName("Java Basics");
+        newCourse.setTitle("Java Basics");
         newCourse.setCategory("BACK");
 
         Course savedCourse = new Course();
         savedCourse.setId(3L);
-        savedCourse.setName("Java Basics");
+        savedCourse.setTitle("Java Basics");
         savedCourse.setCategory("BACK");
 
         when(courseRepository.save(newCourse)).thenReturn(savedCourse);
@@ -141,7 +142,7 @@ class CourseServiceTest {
         // Assert
         assertThat(result).isNotNull();
         assertThat(result.getId()).isEqualTo(3L);
-        assertThat(result.getName()).isEqualTo("Java Basics");
+        assertThat(result.getTitle()).isEqualTo("Java Basics");
 
         verify(courseRepository, times(1)).save(newCourse);
     }
@@ -180,7 +181,7 @@ class CourseServiceTest {
         assertThat(result)
                 .isNotNull()
                 .isEqualTo(course)
-                .extracting(Course::getId, Course::getName, Course::getCategory)
+                .extracting(Course::getId, Course::getTitle, Course::getCategory)
                 .containsExactly(1L, "Spring Boot Basics", "BACK");
 
         verify(courseRepository, times(1)).findById(1L);
@@ -254,7 +255,7 @@ class CourseServiceTest {
         Long courseId = 5L;
         Course courseToDelete = new Course();
         courseToDelete.setId(courseId);
-        courseToDelete.setName("Course to Delete");
+        courseToDelete.setTitle("Course to Delete");
         courseToDelete.setCategory("TEST");
 
         when(courseRepository.findById(courseId)).thenReturn(Optional.of(courseToDelete));
@@ -273,13 +274,22 @@ class CourseServiceTest {
     @DisplayName("Deve atualizar um curso com sucesso")
     void testUpdateSuccess() {
         // Arrange
-        Course updatedCourse = new Course();
-        updatedCourse.setId(1L);
-        updatedCourse.setName("Spring Boot Advanced");
-        updatedCourse.setCategory("BACK");
+        Course course1 = new Course();
+        course1.setId(1L);
+        course1.setTitle("Spring Boot Advanced");
+        course1.setDescription("Advanced Spring Boot concepts and best practices");
+        course1.setCategory("Backend");
+        course1.setDuration(50);
+
+        CourseRequest updatedCourse = new CourseRequest(
+                "Spring Boot Advanced",
+                "Advanced Spring Boot concepts and best practices",
+                "Backend",
+                50
+        );
 
         when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
-        when(courseRepository.save(any(Course.class))).thenReturn(updatedCourse);
+        when(courseRepository.save(any(Course.class))).thenReturn(course1);
 
         // Act
         Course result = courseService.update(1L, updatedCourse);
@@ -287,8 +297,8 @@ class CourseServiceTest {
         // Assert
         assertThat(result)
                 .isNotNull()
-                .extracting(Course::getName, Course::getCategory)
-                .containsExactly("Spring Boot Advanced", "BACK");
+                .extracting(Course::getTitle, Course::getCategory, Course::getDuration)
+                .containsExactly("Spring Boot Advanced", "Backend", 50);
 
         verify(courseRepository, times(1)).findById(1L);
         verify(courseRepository, times(1)).save(any(Course.class));
@@ -298,15 +308,18 @@ class CourseServiceTest {
     @DisplayName("Deve lançar ItemNotFoundException ao atualizar curso inexistente")
     void testUpdateNotFound() {
         // Arrange
-        Course updateData = new Course();
-        updateData.setId(999L);
-        updateData.setName("Nonexistent Course");
-        updateData.setCategory("TEST");
+
+        CourseRequest updatedCourse = new CourseRequest(
+                "Spring Boot Advanced",
+                "Advanced Spring Boot concepts and best practices",
+                "Backend",
+                50
+        );
 
         when(courseRepository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
-        assertThatThrownBy(() -> courseService.update(999L, updateData))
+        assertThatThrownBy(() -> courseService.update(999L, updatedCourse))
                 .isInstanceOf(ItemNotFoundException.class)
                 .hasMessageContaining("Curso não encontrado");
 
@@ -320,27 +333,35 @@ class CourseServiceTest {
         // Arrange
         Course existingCourse = new Course();
         existingCourse.setId(1L);
-        existingCourse.setName("Original Name");
-        existingCourse.setCategory("FRONT");
+        existingCourse.setTitle("Original Name");
+        existingCourse.setDescription("Original description");
+        existingCourse.setCategory("Frontend");
+        existingCourse.setDuration(25);
 
-        Course updateData = new Course();
-        updateData.setName("Updated Name");
-        updateData.setCategory("BACK");
+        CourseRequest updatedCourse1 = new CourseRequest(
+                "Spring Boot Advanced",
+                "Advanced Spring Boot concepts and best practices",
+                "Backend",
+                50
+        );
 
         Course updatedCourse = new Course();
         updatedCourse.setId(1L);
-        updatedCourse.setName("Updated Name");
-        updatedCourse.setCategory("BACK");
+        updatedCourse.setTitle("Updated Name");
+        updatedCourse.setDescription("Updated description");
+        updatedCourse.setCategory("Backend");
+        updatedCourse.setDuration(45);
 
         when(courseRepository.findById(1L)).thenReturn(Optional.of(existingCourse));
         when(courseRepository.save(any(Course.class))).thenReturn(updatedCourse);
 
         // Act
-        Course result = courseService.update(1L, updateData);
+        Course result = courseService.update(1L, updatedCourse1);
 
         // Assert
-        assertThat(result.getName()).isEqualTo("Updated Name");
-        assertThat(result.getCategory()).isEqualTo("BACK");
+        assertThat(result.getTitle()).isEqualTo("Updated Name");
+        assertThat(result.getCategory()).isEqualTo("Backend");
+        assertThat(result.getDuration()).isEqualTo(45);
 
         verify(courseRepository, times(1)).save(any(Course.class));
     }
@@ -351,24 +372,38 @@ class CourseServiceTest {
         // Arrange
         Course existingCourse = new Course();
         existingCourse.setId(1L);
-        existingCourse.setName("Original");
-        existingCourse.setCategory("BACK");
+        existingCourse.setTitle("Original");
+        existingCourse.setDescription("Original description");
+        existingCourse.setCategory("Backend");
+        existingCourse.setDuration(40);
 
         Course updateData = new Course();
         updateData.setId(999L);
-        updateData.setName("Updated");
-        updateData.setCategory("FRONT");
+        updateData.setTitle("Updated");
+        updateData.setDescription("Updated description");
+        updateData.setCategory("Frontend");
+        updateData.setDuration(50);
+
+        CourseRequest updatedCourse1 = new CourseRequest(
+                "Spring Boot Advanced",
+                "Advanced Spring Boot concepts and best practices",
+                "Backend",
+                50
+        );
+
 
         Course savedCourse = new Course();
         savedCourse.setId(1L);
-        savedCourse.setName("Updated");
-        savedCourse.setCategory("FRONT");
+        savedCourse.setTitle("Updated");
+        savedCourse.setDescription("Updated description");
+        savedCourse.setCategory("Frontend");
+        savedCourse.setDuration(50);
 
         when(courseRepository.findById(1L)).thenReturn(Optional.of(existingCourse));
         when(courseRepository.save(any(Course.class))).thenReturn(savedCourse);
 
         // Act
-        Course result = courseService.update(1L, updateData);
+        Course result = courseService.update(1L, updatedCourse1);
 
         // Assert
         assertThat(result.getId()).isEqualTo(1L);
@@ -379,12 +414,14 @@ class CourseServiceTest {
     // ==================== Edge Cases ====================
 
     @Test
-    @DisplayName("Deve lidar com curso com nome muito longo")
+    @DisplayName("Deve lidar com curso com título muito longo")
     void testSaveCourseWithLongName() {
         // Arrange
         Course longNameCourse = new Course();
-        longNameCourse.setName("A".repeat(200));
-        longNameCourse.setCategory("BACK");
+        longNameCourse.setTitle("A".repeat(200));
+        longNameCourse.setDescription("Long title course description");
+        longNameCourse.setCategory("Backend");
+        longNameCourse.setDuration(40);
 
         when(courseRepository.save(any(Course.class))).thenReturn(longNameCourse);
 
@@ -393,7 +430,7 @@ class CourseServiceTest {
 
         // Assert
         assertThat(result).isNotNull();
-        assertThat(result.getName()).hasSize(200);
+        assertThat(result.getTitle()).hasSize(200);
 
         verify(courseRepository, times(1)).save(any(Course.class));
     }

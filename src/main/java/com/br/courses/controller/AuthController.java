@@ -3,6 +3,8 @@ package com.br.courses.controller;
 import com.br.courses.dto.LoginRequest;
 import com.br.courses.dto.LoginResponse;
 import com.br.courses.dto.RefreshTokenRequest;
+import com.br.courses.dto.UserResponse;
+import com.br.courses.mapper.UserMapper;
 import com.br.courses.model.User;
 import com.br.courses.security.JwtTokenProvider;
 import com.br.courses.service.UserService;
@@ -33,6 +35,7 @@ public class AuthController {
     private final UserService userService;
     private final AuthenticationManager authenticationManager;
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserMapper userMapper;
 
     @PostMapping("/login")
     @Operation(summary = "Fazer login", description = "Autentica um usuário e retorna tokens JWT")
@@ -98,16 +101,14 @@ public class AuthController {
     @Operation(summary = "Registrar novo usuário", description = "Cria uma nova conta de usuário no sistema")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "201", description = "Usuário registrado com sucesso",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class))),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class))),
             @ApiResponse(responseCode = "400", description = "Dados inválidos ou username/email já existe",
                     content = @Content(mediaType = "application/json"))
     })
-    public ResponseEntity<User> register(@RequestBody @Valid User user) {
+    public ResponseEntity<UserResponse> register(@RequestBody @Valid User user) {
         try {
             User registeredUser = userService.registerUser(user);
-            // Remove a senha da resposta por segurança
-            registeredUser.setPassword(null);
-            return ResponseEntity.status(HttpStatus.CREATED).body(registeredUser);
+            return ResponseEntity.status(HttpStatus.CREATED).body(userMapper.toResponse(registeredUser));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.badRequest().build();
         }
@@ -116,27 +117,22 @@ public class AuthController {
     @GetMapping("/users")
     @Operation(summary = "Listar todos os usuários", description = "Retorna uma lista de todos os usuários (requer autenticação)")
     @ApiResponse(responseCode = "200", description = "Lista de usuários retornada com sucesso",
-            content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class)))
-    public ResponseEntity<List<User>> getAllUsers() {
+            content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class)))
+    public ResponseEntity<List<UserResponse>> getAllUsers() {
         List<User> users = userService.getAllUsers();
-        // Remove senhas da resposta por segurança
-        users.forEach(u -> u.setPassword(null));
-        return ResponseEntity.ok(users);
+        return ResponseEntity.ok(userMapper.toResponseList(users));
     }
 
     @GetMapping("/users/{id}")
     @Operation(summary = "Obter usuário por ID", description = "Retorna os detalhes de um usuário específico (requer autenticação)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuário encontrado",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class))),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class))),
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
     })
-    public ResponseEntity<User> getUserById(@PathVariable Long id) {
+    public ResponseEntity<UserResponse> getUserById(@PathVariable Long id) {
         return userService.getUserById(id)
-                .map(user -> {
-                    user.setPassword(null);
-                    return ResponseEntity.ok(user);
-                })
+                .map(user -> ResponseEntity.ok(userMapper.toResponse(user)))
                 .orElse(ResponseEntity.notFound().build());
     }
 
@@ -144,14 +140,13 @@ public class AuthController {
     @Operation(summary = "Atualizar usuário", description = "Atualiza os dados de um usuário existente (requer autenticação)")
     @ApiResponses(value = {
             @ApiResponse(responseCode = "200", description = "Usuário atualizado com sucesso",
-                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = User.class))),
+                    content = @Content(mediaType = "application/json", schema = @Schema(implementation = UserResponse.class))),
             @ApiResponse(responseCode = "404", description = "Usuário não encontrado")
     })
-    public ResponseEntity<User> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
+    public ResponseEntity<UserResponse> updateUser(@PathVariable Long id, @RequestBody User userDetails) {
         try {
             User updatedUser = userService.updateUser(id, userDetails);
-            updatedUser.setPassword(null);
-            return ResponseEntity.ok(updatedUser);
+            return ResponseEntity.ok(userMapper.toResponse(updatedUser));
         } catch (IllegalArgumentException e) {
             return ResponseEntity.notFound().build();
         }

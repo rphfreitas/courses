@@ -1,5 +1,6 @@
 package com.br.courses.service;
 
+import com.br.courses.dto.CourseRequest;
 import com.br.courses.exception.ItemNotFoundException;
 import com.br.courses.model.Course;
 import com.br.courses.repository.CourseRepository;
@@ -35,14 +36,16 @@ public class CourseService {
         repository.deleteById(record.getId());
     }
 
-    public Course update(Long id, Course course) {
+    public Course update(Long id, CourseRequest course) {
         log.info("Atualizando curso: " + course.toString());
 
         return repository.findById(id).map(record -> {
-            record.setName(course.getName());
-            record.setCategory(course.getCategory());
+            record.setTitle(course.title());
+            record.setCategory(course.category());
+            record.setDescription(course.description());
+            record.setDuration(course.duration());
             return repository.save(record);
-        }).orElseThrow(() -> new ItemNotFoundException("Curso não encontrado com id: " + course.getId()));
+        }).orElseThrow(() -> new ItemNotFoundException("Curso não encontrado com id: " + id));
     }
 
     public Course find(Long id) {
