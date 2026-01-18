@@ -46,21 +46,20 @@ public class AuthController {
         try {
             Authentication authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(
-                            loginRequest.getUsername(),
-                            loginRequest.getPassword()
+                            loginRequest.username(),
+                            loginRequest.password()
                     )
             );
 
             String accessToken = jwtTokenProvider.generateAccessToken(authentication);
-            String refreshToken = jwtTokenProvider.generateRefreshToken(loginRequest.getUsername());
+            String refreshToken = jwtTokenProvider.generateRefreshToken(loginRequest.username());
 
-            return ResponseEntity.ok(LoginResponse.builder()
-                    .accessToken(accessToken)
-                    .refreshToken(refreshToken)
-                    .tokenType("Bearer")
-                    .expiresIn(3600L) // 1 hora em segundos
-                    .username(loginRequest.getUsername())
-                    .build());
+            return ResponseEntity.ok(LoginResponse.of(
+                    accessToken,
+                    refreshToken,
+                    3600L, // 1 hora em segundos
+                    loginRequest.username()
+            ));
 
         } catch (AuthenticationException e) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
@@ -77,23 +76,22 @@ public class AuthController {
                     content = @Content(mediaType = "application/json"))
     })
     public ResponseEntity<?> refreshToken(@RequestBody @Valid RefreshTokenRequest request) {
-        if (!jwtTokenProvider.validateToken(request.getRefreshToken())) {
+        if (!jwtTokenProvider.validateToken(request.refreshToken())) {
             return ResponseEntity.status(HttpStatus.UNAUTHORIZED)
                     .body("{\"error\": \"Refresh token inválido ou expirado\"}");
         }
 
-        String username = jwtTokenProvider.getUsernameFromToken(request.getRefreshToken());
+        String username = jwtTokenProvider.getUsernameFromToken(request.refreshToken());
         String newAccessToken = jwtTokenProvider.generateAccessToken(
                 new UsernamePasswordAuthenticationToken(username, null)
         );
 
-        return ResponseEntity.ok(LoginResponse.builder()
-                .accessToken(newAccessToken)
-                .refreshToken(request.getRefreshToken())
-                .tokenType("Bearer")
-                .expiresIn(3600L)
-                .username(username)
-                .build());
+        return ResponseEntity.ok(LoginResponse.of(
+                newAccessToken,
+                request.refreshToken(),
+                3600L,
+                username
+        ));
     }
 
     @PostMapping("/register")

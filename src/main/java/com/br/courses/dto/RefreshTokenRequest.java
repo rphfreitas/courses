@@ -1,19 +1,14 @@
 package com.br.courses.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
- * DTO para requisição de refresh token
+ * Record para requisição de refresh token
+ * Immutable e automaticamente gera equals, hashCode, toString e getter
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class RefreshTokenRequest {
-
+public record RefreshTokenRequest(
     @NotBlank(message = "Refresh token é obrigatório")
-    private String refreshToken;
+    String refreshToken
+) {
 }
 

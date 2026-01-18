@@ -1,24 +1,30 @@
 package com.br.courses.dto;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-
 /**
- * DTO para resposta de login com tokens JWT
+ * Record para resposta de login com tokens JWT
+ * Immutable e automaticamente gera equals, hashCode, toString e getter
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class LoginResponse {
+public record LoginResponse(
+    String accessToken,
+    String refreshToken,
+    String tokenType,
+    Long expiresIn,
+    String username
+) {
+    /**
+     * Construtor compacto com valor padrão para tokenType
+     */
+    public LoginResponse {
+        if (tokenType == null || tokenType.isEmpty()) {
+            tokenType = "Bearer";
+        }
+    }
 
-    private String accessToken;
-    private String refreshToken;
-    private String tokenType = "Bearer";
-    private Long expiresIn;
-    private String username;
-
+    /**
+     * Factory method para criar LoginResponse
+     */
+    public static LoginResponse of(String accessToken, String refreshToken, Long expiresIn, String username) {
+        return new LoginResponse(accessToken, refreshToken, "Bearer", expiresIn, username);
+    }
 }
 

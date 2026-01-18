@@ -1,22 +1,17 @@
 package com.br.courses.dto;
 
 import jakarta.validation.constraints.NotBlank;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
 /**
- * DTO para requisição de login
+ * Record para requisição de login
+ * Immutable e automaticamente gera equals, hashCode, toString e getter
  */
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class LoginRequest {
-
+public record LoginRequest(
     @NotBlank(message = "Username é obrigatório")
-    private String username;
+    String username,
 
     @NotBlank(message = "Senha é obrigatória")
-    private String password;
+    String password
+) {
 }
 
