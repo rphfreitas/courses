@@ -18,444 +18,287 @@ import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-@DisplayName("Testes unitários para CourseService")
+@DisplayName("CourseService Tests")
 class CourseServiceTest {
 
     @Mock
-    private CourseRepository courseRepository;
+    private CourseRepository repository;
 
     @InjectMocks
     private CourseService courseService;
 
-    private Course course;
-    private Course course2;
+    private Course testCourse;
+    private CourseRequest courseRequest;
 
     @BeforeEach
     void setUp() {
-        course = new Course();
-        course.setId(1L);
-        course.setTitle("Spring Boot Basics");
-        course.setCategory("BACK");
+        testCourse = new Course();
+        testCourse.setId(1L);
+        testCourse.setTitle("Spring Boot Fundamentals");
+        testCourse.setDescription("Aprenda os fundamentos do Spring Boot");
+        testCourse.setCategory("Backend");
+        testCourse.setDuration(40);
 
-        course2 = new Course();
-        course2.setId(2L);
-        course2.setTitle("Advanced Spring");
-        course2.setCategory("BACK");
+        courseRequest = new CourseRequest(
+                "Spring Boot Advanced",
+                "Aprenda tópicos avançados do Spring Boot",
+                "Backend",
+                50
+        );
     }
 
-    // ==================== findAll Tests ====================
+    // ================== FIND ALL TESTS ==================
 
     @Test
-    @DisplayName("Deve retornar lista de cursos quando existem cursos no banco")
-    void testFindAllWithCourses() {
+    @DisplayName("Deve listar todos os cursos com sucesso")
+    void testFindAllSuccess() {
         // Arrange
-        List<Course> courses = Arrays.asList(course, course2);
-        when(courseRepository.findAll()).thenReturn(courses);
+        Course course2 = new Course();
+        course2.setId(2L);
+        course2.setTitle("Java Basics");
+        course2.setDescription("Fundamentos de Java");
+        course2.setCategory("Backend");
+        course2.setDuration(30);
+
+        List<Course> courses = Arrays.asList(testCourse, course2);
+        when(repository.findAll()).thenReturn(courses);
 
         // Act
         List<Course> result = courseService.findAll();
 
         // Assert
-        assertThat(result)
-                .isNotEmpty()
-                .hasSize(2)
-                .contains(course, course2);
-
-        verify(courseRepository, times(1)).findAll();
+        assertThat(result).isNotEmpty();
+        assertThat(result).hasSize(2);
+        assertThat(result).containsExactly(testCourse, course2);
+        verify(repository, times(1)).findAll();
     }
 
     @Test
-    @DisplayName("Deve retornar lista vazia quando não existem cursos no banco")
-    void testFindAllWithoutCourses() {
+    @DisplayName("Deve retornar lista vazia quando não há cursos")
+    void testFindAllEmpty() {
         // Arrange
-        when(courseRepository.findAll()).thenReturn(Arrays.asList());
+        when(repository.findAll()).thenReturn(Arrays.asList());
 
         // Act
         List<Course> result = courseService.findAll();
 
         // Assert
         assertThat(result).isEmpty();
-
-        verify(courseRepository, times(1)).findAll();
+        verify(repository, times(1)).findAll();
     }
 
-    @Test
-    @DisplayName("Deve retornar lista com um único curso")
-    void testFindAllWithSingleCourse() {
-        // Arrange
-        when(courseRepository.findAll()).thenReturn(Arrays.asList(course));
-
-        // Act
-        List<Course> result = courseService.findAll();
-
-        // Assert
-        assertThat(result)
-                .hasSize(1)
-                .contains(course);
-
-        verify(courseRepository, times(1)).findAll();
-    }
-
-    // ==================== save Tests ====================
+    // ================== SAVE TESTS ==================
 
     @Test
-    @DisplayName("Deve salvar um curso com sucesso")
+    @DisplayName("Deve salvar um novo curso com sucesso")
     void testSaveSuccess() {
         // Arrange
-        when(courseRepository.save(any(Course.class))).thenReturn(course);
-
-        // Act
-        Course result = courseService.save(course);
-
-        // Assert
-        assertThat(result)
-                .isNotNull()
-                .isEqualTo(course)
-                .extracting(Course::getId, Course::getTitle, Course::getCategory)
-                .containsExactly(1L, "Spring Boot Basics", "BACK");
-
-        verify(courseRepository, times(1)).save(course);
-    }
-
-    @Test
-    @DisplayName("Deve salvar um novo curso sem ID")
-    void testSaveNewCourseWithoutId() {
-        // Arrange
         Course newCourse = new Course();
-        newCourse.setTitle("Java Basics");
-        newCourse.setCategory("BACK");
+        newCourse.setTitle("New Course");
+        newCourse.setDescription("Description");
+        newCourse.setCategory("Category");
+        newCourse.setDuration(20);
 
-        Course savedCourse = new Course();
-        savedCourse.setId(3L);
-        savedCourse.setTitle("Java Basics");
-        savedCourse.setCategory("BACK");
-
-        when(courseRepository.save(newCourse)).thenReturn(savedCourse);
+        when(repository.save(any(Course.class))).thenAnswer(invocation -> {
+            Course course = invocation.getArgument(0);
+            course.setId(1L);
+            return course;
+        });
 
         // Act
         Course result = courseService.save(newCourse);
 
         // Assert
         assertThat(result).isNotNull();
-        assertThat(result.getId()).isEqualTo(3L);
-        assertThat(result.getTitle()).isEqualTo("Java Basics");
-
-        verify(courseRepository, times(1)).save(newCourse);
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getTitle()).isEqualTo("New Course");
+        verify(repository, times(1)).save(any(Course.class));
     }
 
-    @Test
-    @DisplayName("Deve salvar múltiplos cursos")
-    void testSaveMultipleCourses() {
-        // Arrange
-        when(courseRepository.save(any(Course.class)))
-                .thenReturn(course)
-                .thenReturn(course2);
-
-        // Act
-        Course result1 = courseService.save(course);
-        Course result2 = courseService.save(course2);
-
-        // Assert
-        assertThat(result1).isEqualTo(course);
-        assertThat(result2).isEqualTo(course2);
-
-        verify(courseRepository, times(2)).save(any(Course.class));
-    }
-
-    // ==================== find Tests ====================
+    // ================== FIND BY ID TESTS ==================
 
     @Test
-    @DisplayName("Deve encontrar um curso pelo ID com sucesso")
-    void testFindByIdSuccess() {
+    @DisplayName("Deve encontrar um curso pelo ID")
+    void testFindSuccess() {
         // Arrange
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
+        when(repository.findById(1L)).thenReturn(Optional.of(testCourse));
 
         // Act
         Course result = courseService.find(1L);
 
         // Assert
-        assertThat(result)
-                .isNotNull()
-                .isEqualTo(course)
-                .extracting(Course::getId, Course::getTitle, Course::getCategory)
-                .containsExactly(1L, "Spring Boot Basics", "BACK");
-
-        verify(courseRepository, times(1)).findById(1L);
+        assertThat(result).isNotNull();
+        assertThat(result.getId()).isEqualTo(1L);
+        assertThat(result.getTitle()).isEqualTo("Spring Boot Fundamentals");
+        verify(repository, times(1)).findById(1L);
     }
 
     @Test
-    @DisplayName("Deve lançar ItemNotFoundException quando curso não é encontrado")
-    void testFindByIdNotFound() {
+    @DisplayName("Deve lançar exceção quando curso não encontrado")
+    void testFindNotFound() {
         // Arrange
-        when(courseRepository.findById(999L)).thenReturn(Optional.empty());
+        when(repository.findById(999L)).thenReturn(Optional.empty());
 
         // Act & Assert
         assertThatThrownBy(() -> courseService.find(999L))
                 .isInstanceOf(ItemNotFoundException.class)
-                .hasMessageContaining("Curso não encontrado com id: 999");
+                .hasMessage("Curso não encontrado com id: 999");
 
-        verify(courseRepository, times(1)).findById(999L);
+        verify(repository, times(1)).findById(999L);
     }
 
-    @Test
-    @DisplayName("Deve lançar ItemNotFoundException com mensagem correta")
-    void testFindByIdNotFoundMessageValidation() {
-        // Arrange
-        Long nonExistentId = 100L;
-        when(courseRepository.findById(nonExistentId)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThatThrownBy(() -> courseService.find(nonExistentId))
-                .isInstanceOf(ItemNotFoundException.class)
-                .hasMessageContaining("100");
-
-        verify(courseRepository, times(1)).findById(nonExistentId);
-    }
-
-    // ==================== delete Tests ====================
-
-    @Test
-    @DisplayName("Deve deletar um curso com sucesso")
-    void testDeleteSuccess() {
-        // Arrange
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
-        doNothing().when(courseRepository).deleteById(1L);
-
-        // Act
-        courseService.delete(1L);
-
-        // Assert
-        verify(courseRepository, times(1)).findById(1L);
-        verify(courseRepository, times(1)).deleteById(1L);
-    }
-
-    @Test
-    @DisplayName("Deve lançar ItemNotFoundException ao tentar deletar curso inexistente")
-    void testDeleteNotFound() {
-        // Arrange
-        when(courseRepository.findById(999L)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThatThrownBy(() -> courseService.delete(999L))
-                .isInstanceOf(ItemNotFoundException.class)
-                .hasMessageContaining("Curso não encontrado com id: 999");
-
-        verify(courseRepository, times(1)).findById(999L);
-        verify(courseRepository, never()).deleteById(anyLong());
-    }
-
-    @Test
-    @DisplayName("Deve verificar que deleteById é chamado com o ID correto")
-    void testDeleteVerifyCorrectIdDeleted() {
-        // Arrange
-        Long courseId = 5L;
-        Course courseToDelete = new Course();
-        courseToDelete.setId(courseId);
-        courseToDelete.setTitle("Course to Delete");
-        courseToDelete.setCategory("TEST");
-
-        when(courseRepository.findById(courseId)).thenReturn(Optional.of(courseToDelete));
-        doNothing().when(courseRepository).deleteById(courseId);
-
-        // Act
-        courseService.delete(courseId);
-
-        // Assert
-        verify(courseRepository).deleteById(courseId);
-    }
-
-    // ==================== update Tests ====================
+    // ================== UPDATE TESTS ==================
 
     @Test
     @DisplayName("Deve atualizar um curso com sucesso")
     void testUpdateSuccess() {
         // Arrange
-        Course course1 = new Course();
-        course1.setId(1L);
-        course1.setTitle("Spring Boot Advanced");
-        course1.setDescription("Advanced Spring Boot concepts and best practices");
-        course1.setCategory("Backend");
-        course1.setDuration(50);
-
-        CourseRequest updatedCourse = new CourseRequest(
-                "Spring Boot Advanced",
-                "Advanced Spring Boot concepts and best practices",
-                "Backend",
-                50
-        );
-
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
-        when(courseRepository.save(any(Course.class))).thenReturn(course1);
+        when(repository.findById(1L)).thenReturn(Optional.of(testCourse));
+        when(repository.save(any(Course.class))).thenReturn(testCourse);
 
         // Act
-        Course result = courseService.update(1L, updatedCourse);
-
-        // Assert
-        assertThat(result)
-                .isNotNull()
-                .extracting(Course::getTitle, Course::getCategory, Course::getDuration)
-                .containsExactly("Spring Boot Advanced", "Backend", 50);
-
-        verify(courseRepository, times(1)).findById(1L);
-        verify(courseRepository, times(1)).save(any(Course.class));
-    }
-
-    @Test
-    @DisplayName("Deve lançar ItemNotFoundException ao atualizar curso inexistente")
-    void testUpdateNotFound() {
-        // Arrange
-
-        CourseRequest updatedCourse = new CourseRequest(
-                "Spring Boot Advanced",
-                "Advanced Spring Boot concepts and best practices",
-                "Backend",
-                50
-        );
-
-        when(courseRepository.findById(999L)).thenReturn(Optional.empty());
-
-        // Act & Assert
-        assertThatThrownBy(() -> courseService.update(999L, updatedCourse))
-                .isInstanceOf(ItemNotFoundException.class)
-                .hasMessageContaining("Curso não encontrado");
-
-        verify(courseRepository, times(1)).findById(999L);
-        verify(courseRepository, never()).save(any(Course.class));
-    }
-
-    @Test
-    @DisplayName("Deve atualizar apenas os campos fornecidos")
-    void testUpdateOnlyProvidedFields() {
-        // Arrange
-        Course existingCourse = new Course();
-        existingCourse.setId(1L);
-        existingCourse.setTitle("Original Name");
-        existingCourse.setDescription("Original description");
-        existingCourse.setCategory("Frontend");
-        existingCourse.setDuration(25);
-
-        CourseRequest updatedCourse1 = new CourseRequest(
-                "Spring Boot Advanced",
-                "Advanced Spring Boot concepts and best practices",
-                "Backend",
-                50
-        );
-
-        Course updatedCourse = new Course();
-        updatedCourse.setId(1L);
-        updatedCourse.setTitle("Updated Name");
-        updatedCourse.setDescription("Updated description");
-        updatedCourse.setCategory("Backend");
-        updatedCourse.setDuration(45);
-
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(existingCourse));
-        when(courseRepository.save(any(Course.class))).thenReturn(updatedCourse);
-
-        // Act
-        Course result = courseService.update(1L, updatedCourse1);
-
-        // Assert
-        assertThat(result.getTitle()).isEqualTo("Updated Name");
-        assertThat(result.getCategory()).isEqualTo("Backend");
-        assertThat(result.getDuration()).isEqualTo(45);
-
-        verify(courseRepository, times(1)).save(any(Course.class));
-    }
-
-    @Test
-    @DisplayName("Deve manter o ID original durante atualização")
-    void testUpdateMaintainsOriginalId() {
-        // Arrange
-        Course existingCourse = new Course();
-        existingCourse.setId(1L);
-        existingCourse.setTitle("Original");
-        existingCourse.setDescription("Original description");
-        existingCourse.setCategory("Backend");
-        existingCourse.setDuration(40);
-
-        Course updateData = new Course();
-        updateData.setId(999L);
-        updateData.setTitle("Updated");
-        updateData.setDescription("Updated description");
-        updateData.setCategory("Frontend");
-        updateData.setDuration(50);
-
-        CourseRequest updatedCourse1 = new CourseRequest(
-                "Spring Boot Advanced",
-                "Advanced Spring Boot concepts and best practices",
-                "Backend",
-                50
-        );
-
-
-        Course savedCourse = new Course();
-        savedCourse.setId(1L);
-        savedCourse.setTitle("Updated");
-        savedCourse.setDescription("Updated description");
-        savedCourse.setCategory("Frontend");
-        savedCourse.setDuration(50);
-
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(existingCourse));
-        when(courseRepository.save(any(Course.class))).thenReturn(savedCourse);
-
-        // Act
-        Course result = courseService.update(1L, updatedCourse1);
-
-        // Assert
-        assertThat(result.getId()).isEqualTo(1L);
-
-        verify(courseRepository, times(1)).save(any(Course.class));
-    }
-
-    // ==================== Edge Cases ====================
-
-    @Test
-    @DisplayName("Deve lidar com curso com título muito longo")
-    void testSaveCourseWithLongName() {
-        // Arrange
-        Course longNameCourse = new Course();
-        longNameCourse.setTitle("A".repeat(200));
-        longNameCourse.setDescription("Long title course description");
-        longNameCourse.setCategory("Backend");
-        longNameCourse.setDuration(40);
-
-        when(courseRepository.save(any(Course.class))).thenReturn(longNameCourse);
-
-        // Act
-        Course result = courseService.save(longNameCourse);
+        Course result = courseService.update(1L, courseRequest);
 
         // Assert
         assertThat(result).isNotNull();
-        assertThat(result.getTitle()).hasSize(200);
-
-        verify(courseRepository, times(1)).save(any(Course.class));
+        assertThat(result.getId()).isEqualTo(1L);
+        verify(repository, times(1)).findById(1L);
+        verify(repository, times(1)).save(any(Course.class));
     }
 
     @Test
-    @DisplayName("Deve lidar com múltiplas chamadas ao repositório")
-    void testMultipleRepositoryCalls() {
+    @DisplayName("Deve atualizar todos os campos do curso")
+    void testUpdateAllFields() {
         // Arrange
-        when(courseRepository.findAll()).thenReturn(Arrays.asList(course, course2));
-        when(courseRepository.findById(1L)).thenReturn(Optional.of(course));
-        when(courseRepository.save(any(Course.class))).thenReturn(course);
+        Course courseToUpdate = new Course();
+        courseToUpdate.setId(1L);
+        courseToUpdate.setTitle("Old Title");
+        courseToUpdate.setDescription("Old Description");
+        courseToUpdate.setCategory("Old Category");
+        courseToUpdate.setDuration(10);
+
+        when(repository.findById(1L)).thenReturn(Optional.of(courseToUpdate));
+        when(repository.save(any(Course.class))).thenAnswer(invocation -> {
+            Course course = invocation.getArgument(0);
+            assertThat(course.getTitle()).isEqualTo("Spring Boot Advanced");
+            assertThat(course.getDescription()).isEqualTo("Aprenda tópicos avançados do Spring Boot");
+            assertThat(course.getCategory()).isEqualTo("Backend");
+            assertThat(course.getDuration()).isEqualTo(50);
+            return course;
+        });
 
         // Act
-        List<Course> allCourses = courseService.findAll();
-        Course foundCourse = courseService.find(1L);
-        Course savedCourse = courseService.save(course);
+        Course result = courseService.update(1L, courseRequest);
 
         // Assert
-        assertThat(allCourses).hasSize(2);
-        assertThat(foundCourse).isNotNull();
-        assertThat(savedCourse).isNotNull();
+        assertThat(result).isNotNull();
+        verify(repository, times(1)).findById(1L);
+        verify(repository, times(1)).save(any(Course.class));
+    }
 
-        verify(courseRepository, times(1)).findAll();
-        verify(courseRepository, times(1)).findById(1L);
-        verify(courseRepository, times(1)).save(any(Course.class));
+    @Test
+    @DisplayName("Deve lançar exceção quando tentar atualizar curso inexistente")
+    void testUpdateNotFound() {
+        // Arrange
+        when(repository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> courseService.update(999L, courseRequest))
+                .isInstanceOf(ItemNotFoundException.class)
+                .hasMessage("Curso não encontrado com id: 999");
+
+        verify(repository, times(1)).findById(999L);
+        verify(repository, never()).save(any());
+    }
+
+    // ================== DELETE TESTS ==================
+
+    @Test
+    @DisplayName("Deve deletar um curso com sucesso")
+    void testDeleteSuccess() {
+        // Arrange
+        when(repository.findById(1L)).thenReturn(Optional.of(testCourse));
+        doNothing().when(repository).deleteById(1L);
+
+        // Act
+        courseService.delete(1L);
+
+        // Assert
+        verify(repository, times(1)).findById(1L);
+        verify(repository, times(1)).deleteById(1L);
+    }
+
+    @Test
+    @DisplayName("Deve lançar exceção quando tentar deletar curso inexistente")
+    void testDeleteNotFound() {
+        // Arrange
+        when(repository.findById(999L)).thenReturn(Optional.empty());
+
+        // Act & Assert
+        assertThatThrownBy(() -> courseService.delete(999L))
+                .isInstanceOf(ItemNotFoundException.class)
+                .hasMessage("Curso não encontrado com id: 999");
+
+        verify(repository, times(1)).findById(999L);
+        verify(repository, never()).deleteById(any());
+    }
+
+    @Test
+    @DisplayName("Deve chamar deleteById com o ID correto")
+    void testDeleteCallsRepositoryWithCorrectId() {
+        // Arrange
+        when(repository.findById(1L)).thenReturn(Optional.of(testCourse));
+        doNothing().when(repository).deleteById(1L);
+
+        // Act
+        courseService.delete(1L);
+
+        // Assert
+        verify(repository, times(1)).deleteById(1L);
+    }
+
+    // ================== EDGE CASES TESTS ==================
+
+    @Test
+    @DisplayName("Deve lidar com cursos com valores extremos")
+    void testFindWithExtremeDuration() {
+        // Arrange
+        Course extremeCourse = new Course();
+        extremeCourse.setId(1L);
+        extremeCourse.setTitle("Extreme Course");
+        extremeCourse.setDescription("Description");
+        extremeCourse.setCategory("Category");
+        extremeCourse.setDuration(Integer.MAX_VALUE);
+
+        when(repository.findById(1L)).thenReturn(Optional.of(extremeCourse));
+
+        // Act
+        Course result = courseService.find(1L);
+
+        // Assert
+        assertThat(result.getDuration()).isEqualTo(Integer.MAX_VALUE);
+    }
+
+    @Test
+    @DisplayName("Deve lidar com títulos longos")
+    void testSaveCourseWithLongTitle() {
+        // Arrange
+        Course courseWithLongTitle = new Course();
+        courseWithLongTitle.setTitle("A".repeat(200));
+        courseWithLongTitle.setDescription("Description");
+        courseWithLongTitle.setCategory("Category");
+        courseWithLongTitle.setDuration(20);
+
+        when(repository.save(any(Course.class))).thenReturn(courseWithLongTitle);
+
+        // Act
+        Course result = courseService.save(courseWithLongTitle);
+
+        // Assert
+        assertThat(result.getTitle()).hasSize(200);
     }
 }
 
